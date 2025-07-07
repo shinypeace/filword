@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Филворды</title>
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS (Стили) */
+
+        /* 1. Глобальные настройки и переменные тем */
+        :root {
+            --font-main: 'Manrope', sans-serif;
+            --transition-speed: 0.3s;
+            --transition-fast: 0.15s;
+
+            /* Светлая тема */
+            --bg-light: #f5f6fa;
+            --text-light: #4a4a4a;
+            --card-light: #ffffff;
+            --accent-light: #4870ff;
+            --accent-hover-light: #3a59c9;
+            --grid-border-light: #e1e4e8;
+            --selected-light: #dbe4ff;
+            --text-selected-light: #2c3e50;
+            --shadow-light: 0 8px 30px rgba(60, 70, 80, 0.12);
+            --hint-color-light: var(--accent-light);
+
+            /* Тёмная тема */
+            --bg-dark: #1d1d1d;
+            --text-dark: #e1e1e1;
+            --card-dark: #2a2a2a;
+            --accent-dark: #5d8aff;
+            --accent-hover-dark: #7d9fff;
+            --grid-border-dark: #3a3a3a;
+            --selected-dark: #313b52;
+            --text-selected-dark: #e1e1e1;
+            --shadow-dark: 0 8px 30px rgba(0, 0, 0, 0.2);
+            --hint-color-dark: var(--accent-dark);
+        }
+
+        body {
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent; /* Убирает синюю подсветку при тапе */
+        }
+        
+        body[data-theme='light'] {
+            --bg-color: var(--bg-light);
+            --text-color: var(--text-light);
+            --card-color: var(--card-light);
+            --accent-color: var(--accent-light);
+            --accent-hover-color: var(--accent-hover-light);
+            --grid-border-color: var(--grid-border-light);
+            --selected-color: var(--selected-light);
+            --text-selected-color: var(--text-selected-light);
+            --box-shadow: var(--shadow-light);
+            --hint-color: var(--hint-color-light);
+        }
+
+        body[data-theme='dark'] {
+            --bg-color: var(--bg-dark);
+            --text-color: var(--text-dark);
+            --card-color: var(--card-dark);
+            --accent-color: var(--accent-dark);
+            --accent-hover-color: var(--accent-hover-dark);
+            --grid-border-color: var(--grid-border-dark);
+            --selected-color: var(--selected-dark);
+            --text-selected-color: var(--text-selected-dark);
+            --box-shadow: var(--shadow-dark);
+            --hint-color: var(--hint-color-dark);
+        }
+
+        /* 2. Структура экранов */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        /* 3. Главное меню */
+        #main-menu .title {
+            font-size: clamp(3rem, 12vw, 5rem);
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-bottom: 2rem;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Изменено на 1 колонку */
+            gap: 1rem;
+            width: 100%;
+            max-width: 320px; /* Уменьшена ширина для вертикального меню */
+        }
+
+        .menu-button {
+            background-color: var(--card-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 35px rgba(60, 70, 80, 0.15);
+        }
+        
+        body[data-theme='dark'] .menu-button:hover {
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+        }
+
+        .menu-button .level-info {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-color);
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+        
+        #theme-toggle {
+            margin-top: 2rem;
+            background-color: var(--card-color);
+            border: 1px solid var(--grid-border-color);
+            color: var(--text-color);
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        
+        #theme-toggle:hover {
+             transform: translateY(-3px);
+             box-shadow: var(--box-shadow);
+        }
+        
+
+        /* 4. Игровой экран */
+        #game-screen {
+            justify-content: space-around;
+        }
+
+        .game-header {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5px;
+        }
+        
+        .game-header-button {
+            background-color: var(--card-color);
+            border: 1px solid var(--grid-border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        .game-header-button:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow);
+            border-color: var(--accent-color);
+        }
+        
+        .level-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        #grid-container {
+            display: grid;
+            gap: 6px;
+            width: 90vw;
+            max-width: 500px;
+            margin: 1rem auto;
+            user-select: none;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--card-color);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            font-size: clamp(1rem, 5vw, 2rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-color);
+            transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+            cursor: pointer;
+        }
+        
+        .grid-cell.selected {
+            background-color: var(--selected-color);
+            color: var(--text-selected-color);
+            transform: scale(0.9);
+            border-color: var(--accent-color);
+        }
+
+        .grid-cell.found {
+            transform: scale(1);
+            color: #fff; /* Будет перезаписано JS */
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4); /* Контур слова */
+        }
+        
+        .grid-cell.hint {
+            /* Анимация теперь однократная */
+            animation: hint-pulse 1s ease-in-out;
+        }
+
+        @keyframes hint-pulse {
+            0% { box-shadow: inset 0 0 0 0px var(--hint-color); }
+            50% { box-shadow: inset 0 0 0 4px var(--hint-color); }
+            100% { box-shadow: inset 0 0 0 0px var(--hint-color); }
+        }
+
+        /* 5. Модальное окно победы */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed);
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            padding: 2rem 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            transform: scale(0.8);
+            transition: transform var(--transition-speed) ease-out;
+            width: 90%;
+            max-width: 380px;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-content h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+
+        .modal-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            width: 100%;
+        }
+
+        .modal-button:hover {
+            background-color: var(--accent-hover-color);
+            transform: scale(1.05);
+        }
+
+    </style>
+</head>
+<body data-theme="light">
+
+    <div id="app-container">
+        
+        <div id="main-menu" class="screen active">
+            <h1 class="title">Филворды</h1>
+            <div class="menu-grid">
+                <button class="menu-button" data-size="5">5 x 5 <div class="level-info" id="level-info-5">Уровень: 1</div></button>
+                <button class="menu-button" data-size="6">6 x 6 <div class="level-info" id="level-info-6">Уровень: 1</div></button>
+                <button class="menu-button" data-size="7">7 x 7 <div class="level-info" id="level-info-7">Уровень: 1</div></button>
+                <button class="menu-button" data-size="8">8 x 8 <div class="level-info" id="level-info-8">Уровень: 1</div></button>
+            </div>
+            <button id="theme-toggle">Сменить тему</button>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <button class="game-header-button" id="back-button">Меню</button>
+                <div id="level-display" class="level-display">Уровень 1</div>
+                <button class="game-header-button" id="hint-button">💡</button>
+            </div>
+            <div id="grid-container"></div>
+            <div class="game-footer-placeholder"></div>
+        </div>
+
+    </div>
+
+    <div id="win-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Отлично!</h2>
+            <p>Уровень пройден!</p>
+            <button id="next-level-button" class="modal-button">Следующий</button>
+        </div>
+    </div>
+
+    <script>
+    // JavaScript (Логика игры)
+    document.addEventListener('DOMContentLoaded', async () => {
+
+// === VK Integration ===
+            const APP_ID = 53865837;
+            const STATS_VK_KEY_PREFIX = 'ticTacToeStats';
+            const STATS_LOCAL_KEY = 'ticTacToeLocalSave';
+
+            let vkUser = null;
+            let vkUserId = null;
+            let vkAccessToken = null;
+            
+            // Инициализация VK Bridge
+        async function initVK() {
+            try {
+                await vkBridge.send('VKWebAppInit', {});
+                
+                // Получаем информацию о пользователе
+                const userInfo = await vkBridge.send('VKWebAppGetUserInfo');
+                vkUser = userInfo;
+                vkUserId = userInfo.id;
+                
+                // Получаем токен доступа
+                const tokenData = await vkBridge.send('VKWebAppGetAuthToken', {
+                    app_id: APP_ID,
+                    scope: 'storage'
+                });
+                vkAccessToken = tokenData.access_token;
+                
+                // Загружаем статистику
+                await loadStats();
+                
+                console.log('VK Bridge инициализирован');
+            } catch (error) {
+                console.error('Ошибка инициализации VK Bridge:', error);
+                // Загружаем локальные данные, если не удалось подключиться к VK
+                loadLocalStats();
+            }
+        }
+        await initVK();
+
+
+        // 1. БАЗА СЛОВ (можно вставлять в любом регистре)
+        const wordsDB = {
+            4: ["КОФЕ", "ЛЕТО", "МОРЕ", "НЕБО", "РЫБА", "СЛОН", "ХЛЕБ", "ЦВЕТ", "ЧАША", "ЯДРО"],
+            5: ["АРБУЗ", "БАНАН", "ВЕТЕР", "ГОРОД", "ДВЕРЬ", "КНИГА", "ЛАМПА", "МЫШКА", "ОГОНЬ", "ПЕСНЯ"],
+            6: ["АПТЕКА", "ГАРАЖ", "ДОРОГА", "ЗАДАЧА", "КАМЕНЬ", "КОСМОС", "МАШИНА", "ПОБЕДА", "СОЛНЦЕ", "ТЕАТР"],
+            7: ["БУТЫЛКА", "ДЕРЕВНЯ", "ЗАВТРАК", "ЗЕРКАЛО", "КОРАБЛЬ", "МАГАЗИН", "ПЛАНЕТА", "РАДОСТЬ", "ТЕЛЕФОН", "УЧИТЕЛЬ"],
+            8: ["АВТОБУС", "ВОДОПАД", "ГОРИЗОНТ", "КАРТОШКА", "КВАРТИРА", "МОЛОТОК", "ОКЕАН", "САМОЛЕТ", "ЧЕМПИОН", "ШОКОЛАД"],
+            9: ["ВИНОГРАД", "ИНСТРУМЕНТ", "КАЛЕНДАРЬ", "ОДУВАНЧИК", "ПИРАМИДА", "ПУТЕШЕСТВИЕ", "РЕСТОРАН", "ФЕСТИВАЛЬ"],
+            10: ["ВЕЛОСИПЕД", "ВООБРАЖЕНИЕ", "ГОСУДАРСТВО", "ЗНАКОМСТВО", "ИСКУССТВО", "КОМПЬЮТЕР", "ЛИТЕРАТУРА", "МАТЕМАТИКА"],
+            11: ["АВТОМОБИЛЬ", "АПЛОДИСМЕНТЫ", "БЛАГОДАРНОСТЬ", "ВДОХНОВЕНИЕ", "ВОСПОМИНАНИЕ", "ДИСЦИПЛИНА", "ОТВЕТСТВЕННОСТЬ"],
+            12: ["ПРОГРАММИРОВАНИЕ", "ДОСТОПРИМЕЧАТЕЛЬНОСТЬ"]
+        };
+        
+        const foundColors = [
+            { bg: '#f39c12', text: '#ffffff' }, { bg: '#2ecc71', text: '#ffffff' },
+            { bg: '#3498db', text: '#ffffff' }, { bg: '#9b59b6', text: '#ffffff' },
+            { bg: '#e74c3c', text: '#ffffff' }, { bg: '#1abc9c', text: '#ffffff' },
+            { bg: '#f1c40f', text: '#ffffff' }, { bg: '#27ae60', text: '#ffffff' },
+            { bg: '#2980b9', text: '#ffffff' }, { bg: '#8e44ad', text: '#ffffff' }
+        ]
+
+        // 2. СОСТОЯНИЕ ИГРЫ И ЭЛЕМЕНТЫ DOM
+        const state = {
+            gridSize: 0,
+            currentLevel: 1,
+            words: [],
+            wordCellCoords: new Map(),
+            grid: [],
+            foundWords: [],
+            isSelecting: false,
+            selectedCells: [],
+            hintedWord: null,
+            hintedLetterIndex: 0,
+        };
+        
+        const dom = {
+            mainMenu: document.getElementById('main-menu'),
+            gameScreen: document.getElementById('game-screen'),
+            gridContainer: document.getElementById('grid-container'),
+            levelDisplay: document.getElementById('level-display'),
+            winModal: document.getElementById('win-modal'),
+            themeToggle: document.getElementById('theme-toggle'),
+            backButton: document.getElementById('back-button'),
+            hintButton: document.getElementById('hint-button'),
+            nextLevelButton: document.getElementById('next-level-button'),
+        };
+
+        // 3. ОСНОВНАЯ ЛОГИКА
+        
+        const init = () => {
+            setupEventListeners();
+            loadTheme();
+            updateMenuLevels();
+        };
+
+        const setupEventListeners = () => {
+            document.querySelectorAll('.menu-button').forEach(button => {
+                button.addEventListener('click', () => startGame(parseInt(button.dataset.size)));
+            });
+            dom.backButton.addEventListener('click', showMainMenu);
+            dom.hintButton.addEventListener('click', handleHintClick);
+            dom.nextLevelButton.addEventListener('click', nextLevel);
+            dom.themeToggle.addEventListener('click', toggleTheme);
+            
+            // Мышь
+            dom.gridContainer.addEventListener('mousedown', handleMouseDown);
+            dom.gridContainer.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp); // Слушатель на все окно
+            
+            // Сенсорный ввод (ИСПРАВЛЕНО)
+            dom.gridContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+            dom.gridContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            window.addEventListener('touchend', handleTouchEnd); // Слушатель на все окно
+        };
+
+        const startGame = (size) => {
+            state.gridSize = size;
+            loadProgress();
+            showScreen('game-screen');
+            generateLevel();
+        };
+
+        const nextLevel = () => {
+            hideWinModal();
+            state.currentLevel++;
+            saveProgress();
+            generateLevel();
+        }
+
+        const showMainMenu = () => {
+            showScreen('main-menu');
+            updateMenuLevels();
+        };
+
+        const showScreen = (screenId) => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        };
+
+        const generateLevel = () => {
+            resetStateForNewLevel();
+            dom.levelDisplay.textContent = `Уровень ${state.currentLevel}`;
+            
+            const requiredArea = state.gridSize * state.gridSize;
+            state.words = findWordCombination(requiredArea);
+            
+            if (!state.words) {
+                alert("Не удалось подобрать слова для поля. Попробуйте добавить больше слов в базу или изменить размер поля.");
+                showMainMenu();
+                return;
+            }
+
+            let success = false;
+            let attempts = 0;
+            while(!success && attempts < 200) {
+                state.grid = createEmptyGrid();
+                state.wordCellCoords.clear();
+                success = placeWordsOnGrid();
+                attempts++;
+            }
+
+            if(!success) {
+                alert("Не удалось сгенерировать уровень (слова не размещаются). Попробуйте снова.");
+                showMainMenu();
+                return;
+            }
+            renderGrid();
+        };
+        
+        const resetStateForNewLevel = () => {
+            state.foundWords = [];
+            state.selectedCells = [];
+            state.hintedWord = null;
+            state.hintedLetterIndex = 0;
+            dom.gridContainer.innerHTML = '';
+        };
+
+        // 4. ГЕНЕРАЦИЯ ПОЛЯ
+        function findWordCombination(targetSum) {
+            const allWords = Object.values(wordsDB).flat().map(w => w.toLowerCase());
+            const uniqueWords = [...new Set(allWords)];
+            uniqueWords.sort(() => Math.random() - 0.5);
+
+            let result = null;
+
+            function backtrack(startIndex, currentSum, combination) {
+                if (result) return;
+                if (currentSum === targetSum) {
+                    result = [...combination];
+                    return;
+                }
+                if (currentSum > targetSum || startIndex === uniqueWords.length) {
+                    return;
+                }
+
+                const word = uniqueWords[startIndex];
+                combination.push(word);
+                backtrack(startIndex + 1, currentSum + word.length, combination);
+                
+                if (result) return;
+                combination.pop();
+                backtrack(startIndex + 1, currentSum, combination);
+            }
+            backtrack(0, 0, []);
+            return result;
+        }
+
+        const createEmptyGrid = () => Array.from({ length: state.gridSize }, () => Array(state.gridSize).fill(null));
+
+        const placeWordsOnGrid = () => {
+            const sortedWords = [...state.words].sort((a, b) => b.length - a.length);
+            for (const word of sortedWords) {
+                let placed = false;
+                const placementAttempts = 150;
+                for (let i = 0; i < placementAttempts; i++) {
+                    const path = findPathForWord(word.length);
+                    if (path) {
+                        state.wordCellCoords.set(word, path);
+                        for (let j = 0; j < word.length; j++) {
+                            const { r, c } = path[j];
+                            state.grid[r][c] = word[j];
+                        }
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) return false;
+            }
+            return true;
+        };
+        
+        const findPathForWord = (length) => {
+            const startR = Math.floor(Math.random() * state.gridSize);
+            const startC = Math.floor(Math.random() * state.gridSize);
+            const path = [];
+
+            function backtrack(r, c) {
+                if (path.length === length) return true;
+                if (r < 0 || r >= state.gridSize || c < 0 || c >= state.gridSize || state.grid[r][c] !== null) return false;
+                
+                path.push({ r, c });
+                state.grid[r][c] = 'temp';
+                const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]].sort(() => Math.random() - 0.5);
+                
+                for (const [dr, dc] of directions) {
+                    if (backtrack(r + dr, c + dc)) {
+                        state.grid[r][c] = null;
+                        return true;
+                    }
+                }
+                path.pop();
+                state.grid[r][c] = null;
+                return false;
+            }
+            return backtrack(startR, startC) ? path : null;
+        };
+        
+        // 5. РЕНДЕРИНГ
+        const renderGrid = () => {
+            dom.gridContainer.innerHTML = '';
+            dom.gridContainer.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
+            state.grid.forEach((row, r) => {
+                row.forEach((letter, c) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.textContent = letter;
+                    dom.gridContainer.appendChild(cell);
+                });
+            });
+        };
+        
+        const updateSelectionLook = () => {
+             document.querySelectorAll('.grid-cell.selected').forEach(c => c.classList.remove('selected'));
+             state.selectedCells.forEach(({r, c}) => {
+                const cellEl = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`);
+                if(cellEl) cellEl.classList.add('selected');
+             });
+        };
+        
+        // 6. ОБРАБОТЧИКИ ВЗАИМОДЕЙСТВИЯ (ИСПРАВЛЕНО ДЛЯ СЕНСОРА)
+        const getCellFromCoords = ({ clientX, clientY }) => {
+            return document.elementFromPoint(clientX, clientY);
+        }
+
+        const startSelection = (target) => {
+            const cell = target.closest('.grid-cell');
+            if (cell && !cell.classList.contains('found')) {
+                state.isSelecting = true;
+                addCellToSelection(cell);
+            }
+        };
+
+        const moveSelection = (target) => {
+            if (!state.isSelecting) return;
+            const cell = target.closest('.grid-cell');
+            if (cell && !cell.classList.contains('found')) {
+                addCellToSelection(cell);
+            }
+        };
+
+        const endSelection = () => {
+            if (state.isSelecting) {
+                state.isSelecting = false;
+                checkSelectedWord();
+            }
+        };
+
+        // Мышь
+        const handleMouseDown = (e) => startSelection(e.target);
+        const handleMouseMove = (e) => moveSelection(e.target);
+        const handleMouseUp = () => endSelection();
+
+        // Тач
+        const handleTouchStart = (e) => {
+            e.preventDefault();
+            startSelection(getCellFromCoords(e.touches[0]));
+        };
+        const handleTouchMove = (e) => {
+            e.preventDefault();
+            moveSelection(getCellFromCoords(e.touches[0]));
+        };
+        const handleTouchEnd = () => endSelection();
+        
+        const addCellToSelection = (cellEl) => {
+            const r = parseInt(cellEl.dataset.r);
+            const c = parseInt(cellEl.dataset.c);
+            
+            if (state.selectedCells.some(cell => cell.r === r && cell.c === c)) return;
+
+            const lastCell = state.selectedCells[state.selectedCells.length - 1];
+            if (lastCell && Math.abs(lastCell.r - r) + Math.abs(lastCell.c - c) !== 1) return;
+
+            state.selectedCells.push({r, c});
+            updateSelectionLook();
+        };
+
+        const checkSelectedWord = () => {
+            if (state.selectedCells.length === 0) return;
+            let selectedWordStr = state.selectedCells.map(({r, c}) => state.grid[r][c]).join('');
+            const wordData = state.words.find(w => w === selectedWordStr.toLowerCase());
+
+            if (wordData && !state.foundWords.includes(wordData)) {
+                if (wordData === state.hintedWord) clearHint();
+                state.foundWords.push(wordData);
+                markWordAsFound(wordData);
+                if (state.foundWords.length === state.words.length) {
+                    setTimeout(showWinModal, 500);
+                }
+            }
+            
+            state.selectedCells = [];
+            updateSelectionLook();
+        };
+        
+        const markWordAsFound = (word) => {
+            const colorIndex = (state.foundWords.length - 1) % foundColors.length;
+            const color = foundColors[colorIndex];
+            const coords = state.wordCellCoords.get(word);
+            
+            coords.forEach(({r, c}) => {
+                const cellEl = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`);
+                if (cellEl) {
+                    cellEl.classList.add('found');
+                    cellEl.style.backgroundColor = color.bg;
+                    cellEl.style.color = color.text;
+                }
+            });
+        };
+        
+        // 7. СИСТЕМА ПОДСКАЗОК (ИСПРАВЛЕНА АНИМАЦИЯ)
+        const handleHintClick = () => {
+            if (!state.hintedWord) {
+                const unfoundWords = state.words.filter(w => !state.foundWords.includes(w));
+                if (unfoundWords.length === 0) return;
+                state.hintedWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+                state.hintedLetterIndex = 0;
+            }
+            
+            if (state.hintedLetterIndex >= state.hintedWord.length) return;
+            state.hintedLetterIndex++;
+            
+            const coords = state.wordCellCoords.get(state.hintedWord);
+            const cellsToAnimate = [];
+            for (let i = 0; i < state.hintedLetterIndex; i++) {
+                const { r, c } = coords[i];
+                const cellEl = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`);
+                if (cellEl) cellsToAnimate.push(cellEl);
+            }
+            
+            // Сбрасываем и синхронизируем анимацию
+            document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
+            
+            setTimeout(() => {
+                cellsToAnimate.forEach(cell => cell.classList.add('hint'));
+            }, 10);
+        };
+        
+        const clearHint = () => {
+            state.hintedWord = null;
+            state.hintedLetterIndex = 0;
+            document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
+        };
+
+        // 8. УПРАВЛЕНИЕ UI И СОХРАНЕНИЕ
+        const showWinModal = () => dom.winModal.classList.add('active');
+        const hideWinModal = () => dom.winModal.classList.remove('active');
+
+        const saveProgress = () => {
+            localStorage.setItem(`fillword_level_${state.gridSize}`, state.currentLevel);
+        };
+
+        const loadProgress = () => {
+            const savedLevel = localStorage.getItem(`fillword_level_${state.gridSize}`);
+            state.currentLevel = savedLevel ? parseInt(savedLevel) : 1;
+        };
+
+        const updateMenuLevels = () => {
+            document.querySelectorAll('.menu-button').forEach(button => {
+                const size = button.dataset.size;
+                const level = localStorage.getItem(`fillword_level_${size}`) || 1;
+                button.querySelector('.level-info').textContent = `Уровень: ${level}`;
+            });
+        };
+
+        const toggleTheme = () => {
+            const newTheme = document.body.dataset.theme === 'light' ? 'dark' : 'light';
+            document.body.dataset.theme = newTheme;
+            localStorage.setItem('fillword_theme', newTheme);
+        };
+
+        const loadTheme = () => {
+            const savedTheme = localStorage.getItem('fillword_theme') || 'light';
+            document.body.dataset.theme = savedTheme;
+        };
+        
+        // ЗАПУСК ИГРЫ
+        init();
+    });
+    </script>
+</body>
+</html>
