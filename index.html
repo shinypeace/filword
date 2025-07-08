@@ -303,20 +303,26 @@
 
         // --- ЛОГИКА ИНТЕГРАЦИИ VK ---
         async function initVk() {
-            try {
-                await vkBridge.send('VKWebAppInit', {});
-                const user = await vkBridge.send('VKWebAppGetUserInfo');
-                vkUserId = user.id;
-                await loadGameData(); // Загружаем данные пользователя
-                await vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' });
-            } catch (error) {
-                console.warn('VK Init failed, running in guest mode.', error);
-                vkUserId = 'guest_' + Math.random().toString(36).substr(2, 9);
-                await loadGameData(); // Загружаем гостевые данные
-            } finally {
-                initGameUI(); // Инициализируем UI после загрузки данных
-            }
-        }
+    try {
+        await vkBridge.send('VKWebAppInit', {});
+        
+        // --- ДОБАВЛЕНО: Предварительная загрузка рекламы ---
+        // Это говорит платформе VK начать кешировать рекламу заранее.
+        await vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' });
+
+        const user = await vkBridge.send('VKWebAppGetUserInfo');
+        vkUserId = user.id;
+        await loadGameData(); // Загружаем данные пользователя
+        await vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' });
+
+    } catch (error) {
+        console.warn('VK Init failed, running in guest mode.', error);
+        vkUserId = 'guest_' + Math.random().toString(36).substr(2, 9);
+        await loadGameData(); // Загружаем гостевые данные
+    } finally {
+        initGameUI(); // Инициализируем UI после загрузки данных
+    }
+}
 
         async function saveGameData() {
             if (!vkUserId) return;
@@ -485,36 +491,53 @@
         
         // --- ЛОГИКА ПОДСКАЗКИ С REWARDED AD ---
         async function handleHintClick() {
-            if (dom.hintButton.disabled) return;
-            try {
-                const adResult = await vkBridge.send('VKWebAppShowRewardAd', { ad_format: 'reward' });
-                if (adResult.result) {
-                    grantHint();
-                    startHintCooldown();
-                }
-            } catch (error) {
-                console.warn('Rewarded Ad error:', error);
-                // Можно показать сообщение, что реклама не загрузилась
-            }
+    if (dom.hintButton.disabled) return;
+
+    const originalText = dom.hintButton.textContent;
+    dom.hintButton.disabled = true;
+    dom.hintButton.textContent = '...'; // Индикатор загрузки
+
+    try {
+        const adResult = await vkBridge.send('VKWebAppShowRewardAd', { ad_format: 'reward' });
+        
+        if (adResult.result) {
+            // Успех: пользователь посмотрел рекламу
+            grantHint();
+            startHintCooldown(); // Кулдаун запустится и сам будет управлять состоянием кнопки
+        } else {
+            // Пользователь закрыл рекламу, не досмотрев
+            dom.hintButton.disabled = false;
+            dom.hintButton.textContent = originalText;
         }
-        function grantHint() {
-            if (!state.hintedWord) {
-                const unfoundWords = state.words.filter(w => !state.foundWords.includes(w));
-                if (unfoundWords.length === 0) return;
-                state.hintedWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
-                state.hintedLetterIndex = 0;
-            }
-            if (state.hintedLetterIndex >= state.hintedWord.length) return;
-            state.hintedLetterIndex++;
-            const coords = state.wordCellCoords.get(state.hintedWord);
-            const cellsToAnimate = [];
-            for (let i = 0; i < state.hintedLetterIndex; i++) {
-                const cellEl = document.querySelector(`.grid-cell[data-r='${coords[i].r}'][data-c='${coords[i].c}']`);
-                if (cellEl) cellsToAnimate.push(cellEl);
-            }
-            document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
-            setTimeout(() => cellsToAnimate.forEach(cell => cell.classList.add('hint')), 10);
-        }
+    } catch (error) {
+        console.warn('Rewarded Ad error:', error);
+        alert('Не удалось загрузить рекламу. Попробуйте еще раз через несколько секунд.');
+        // Возвращаем кнопку в исходное состояние при ошибке
+        dom.hintButton.disabled = false;
+        dom.hintButton.textContent = originalText;
+    }
+}
+function grantHint() {
+    if (!state.hintedWord) {
+        const unfoundWords = state.words.filter(w => !state.foundWords.includes(w));
+        if (unfoundWords.length === 0) return;
+        state.hintedWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+        state.hintedLetterIndex = 0;
+    }
+    if (state.hintedLetterIndex >= state.hintedWord.length) return;
+    
+    state.hintedLetterIndex++;
+    const coords = state.wordCellCoords.get(state.hintedWord);
+    const cellsToAnimate = [];
+    
+    for (let i = 0; i < state.hintedLetterIndex; i++) {
+        const cellEl = document.querySelector(`.grid-cell[data-r='${coords[i].r}'][data-c='${coords[i].c}']`);
+        if (cellEl) cellsToAnimate.push(cellEl);
+    }
+    
+    document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
+    setTimeout(() => cellsToAnimate.forEach(cell => cell.classList.add('hint')), 10);
+}
         function startHintCooldown() {
             clearInterval(hintCooldownInterval);
             dom.hintButton.disabled = true;
