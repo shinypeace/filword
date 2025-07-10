@@ -455,14 +455,14 @@
             dom.levelDisplay.textContent = `Уровень ${gameState.levels[state.gridSize]}`;
             const requiredArea = state.gridSize * state.gridSize;
             state.words = findWordCombination(requiredArea);
-            if (!state.words) { alert("Ошибка: не удалось подобрать слова для поля."); showMainMenu(); return; }
+            if (!state.words) {  showMainMenu(); return; }
             let success = false; let attempts = 0;
             while(!success && attempts++ < 200) {
                 state.grid = createEmptyGrid();
                 state.wordCellCoords.clear();
                 success = placeWordsOnGrid();
             }
-            if(!success) { alert("Ошибка: не удалось сгенерировать уровень."); showMainMenu(); return; }
+            if(!success) {  showMainMenu(); return; }
             renderGrid();
         }
         
@@ -490,41 +490,53 @@
         function markWordAsFound(word) { const colorIndex = (state.foundWords.length - 1) % foundColors.length; const color = foundColors[colorIndex]; const coords = state.wordCellCoords.get(word); coords.forEach(({r, c}) => { const cellEl = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`); if (cellEl) { cellEl.classList.add('found'); cellEl.style.backgroundColor = color.bg; cellEl.style.color = '#ffffff'; } }); }
         
         // --- ЛОГИКА ПОДСКАЗКИ С REWARDED AD ---
-        async function handleHintClick() {
+async function handleHintClick() {
+    // Блокируем кнопку, чтобы избежать двойных нажатий
     if (dom.hintButton.disabled) return;
-
-    const originalText = dom.hintButton.textContent;
     dom.hintButton.disabled = true;
-    dom.hintButton.textContent = '...'; // Индикатор загрузки
 
     try {
-        const adResult = await vkBridge.send('VKWebAppShowRewardAd', { ad_format: 'reward' });
-        
-        if (adResult.result) {
-            // Успех: пользователь посмотрел рекламу
-            grantHint();
-            startHintCooldown(); // Кулдаун запустится и сам будет управлять состоянием кнопки
+        // 1. Проверяем, доступна ли реклама
+        const adStatus = await vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' });
+
+        if (adStatus.result) {
+            // 2. Если доступна, показываем
+            const adResult = await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' });
+
+            if (adResult.result) {
+                // 3. Если пользователь посмотрел, даем подсказку
+                grantHint();
+            } else {
+                // Пользователь закрыл рекламу
+                showToast('Просмотрите рекламу до конца');
+            }
         } else {
-            // Пользователь закрыл рекламу, не досмотрев
-            dom.hintButton.disabled = false;
-            dom.hintButton.textContent = originalText;
+            // Реклама недоступна для показа в данный момент
+            showToast('Подсказка пока недоступна');
         }
     } catch (error) {
-        console.warn('Rewarded Ad error:', error);
-        alert('Не удалось загрузить рекламу. Попробуйте еще раз через несколько секунд.');
-        // Возвращаем кнопку в исходное состояние при ошибке
+        console.error('Rewarded ad error:', error);
+        showToast('Ошибка при показе рекламы');
+    } finally {
+        // В любом случае разблокируем кнопку после попытки
         dom.hintButton.disabled = false;
-        dom.hintButton.textContent = originalText;
     }
 }
 function grantHint() {
     if (!state.hintedWord) {
         const unfoundWords = state.words.filter(w => !state.foundWords.includes(w));
-        if (unfoundWords.length === 0) return;
+        if (unfoundWords.length === 0) {
+            showToast('Все слова найдены!');
+            return;
+        }
         state.hintedWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
         state.hintedLetterIndex = 0;
     }
-    if (state.hintedLetterIndex >= state.hintedWord.length) return;
+
+    if (state.hintedLetterIndex >= state.hintedWord.length) {
+        showToast('Все буквы этого слова уже подсказаны');
+        return;
+    }
     
     state.hintedLetterIndex++;
     const coords = state.wordCellCoords.get(state.hintedWord);
@@ -538,23 +550,13 @@ function grantHint() {
     document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
     setTimeout(() => cellsToAnimate.forEach(cell => cell.classList.add('hint')), 10);
 }
-        function startHintCooldown() {
-            clearInterval(hintCooldownInterval);
-            dom.hintButton.disabled = true;
-            let secondsLeft = HINT_COOLDOWN_SECONDS;
-            dom.hintButton.textContent = `💡 (${secondsLeft})`;
-            hintCooldownInterval = setInterval(() => {
-                secondsLeft--;
-                dom.hintButton.textContent = `💡 (${secondsLeft})`;
-                if (secondsLeft <= 0) {
-                    clearInterval(hintCooldownInterval);
-                    dom.hintButton.disabled = false;
-                    dom.hintButton.textContent = '💡';
-                }
-            }, 1000);
-        }
-        const clearHint = () => { state.hintedWord = null; state.hintedLetterIndex = 0; document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint')); };
 
+const clearHint = () => { 
+    state.hintedWord = null; 
+    state.hintedLetterIndex = 0; 
+    document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint')); 
+};
+ 
         // --- ПЕРВЫЙ ЗАПУСК ---
         initVk();
     });
