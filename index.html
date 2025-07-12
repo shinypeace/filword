@@ -14,7 +14,7 @@
             --font-main: 'Manrope', sans-serif;
             --transition-speed: 0.3s;
             --transition-fast: 0.15s;
-            --banner-height: 50px; /* Высота баннера */
+            --banner-height: 50px; /* Высота баннера VK */
             /* Цвета тем */
             --bg-light: #f5f6fa; --text-light: #4a4a4a; --card-light: #ffffff; --accent-light: #4870ff; --accent-hover-light: #3a59c9; --grid-border-light: #e1e4e8; --selected-light: #dbe4ff; --shadow-light: 0 8px 30px rgba(60, 70, 80, 0.12); --hint-color-light: var(--accent-light);
             --bg-dark: #1d1d1d; --text-dark: #e1e1e1; --card-dark: #2a2a2a; --accent-dark: #5d8aff; --accent-hover-dark: #7d9fff; --grid-border-dark: #3a3a3a; --selected-dark: #313b52; --shadow-dark: 0 8px 30px rgba(0, 0, 0, 0.2); --hint-color-dark: var(--accent-dark);
@@ -22,15 +22,14 @@
         html { height: 100%; }
         body {
             font-family: var(--font-main);
-            margin: 0;
-            padding: 0; /* Убираем отступы, чтобы экраны занимали все место */
-            box-sizing: border-box;
+            margin: 0; padding: 0; box-sizing: border-box;
             background-color: var(--bg-color); color: var(--text-color);
             transition: background-color var(--transition-speed), color var(--transition-speed);
             overflow: hidden; user-select: none; -webkit-user-select: none;
             touch-action: none; -webkit-tap-highlight-color: transparent;
             height: 100%;
-            padding-bottom: var(--banner-height); /* Компенсация высоты баннера */
+            /* ИСПРАВЛЕНИЕ: Добавляем отступ снизу под баннер */
+            padding-bottom: var(--banner-height);
         }
         body[data-theme='light'] { --bg-color: var(--bg-light); --text-color: var(--text-light); --card-color: var(--card-light); --accent-color: var(--accent-light); --accent-hover-color: var(--accent-hover-light); --grid-border-color: var(--grid-border-light); --selected-color: var(--selected-light); --text-selected-color: #2c3e50; --box-shadow: var(--shadow-light); --hint-color: var(--hint-color-light); }
         body[data-theme='dark'] { --bg-color: var(--bg-dark); --text-color: var(--text-dark); --card-color: var(--card-dark); --accent-color: var(--accent-dark); --accent-hover-color: var(--accent-hover-dark); --grid-border-color: var(--grid-border-dark); --selected-color: var(--selected-dark); --text-selected-color: #e1e1e1; --box-shadow: var(--shadow-dark); --hint-color: var(--hint-color-dark); }
@@ -57,27 +56,30 @@
         .menu-button.locked .lock-overlay { opacity: 1; }
         .lock-icon { font-size: 2rem; }
         .unlock-progress { font-size: 0.9rem; font-weight: 600; margin-top: 0.5rem; }
-        #theme-toggle { margin-top: 2rem; background-color: var(--card-color); border: 1px solid var(--grid-border-color); color: var(--text-color); padding: 0.8rem 1.5rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all var(--transition-speed); }
-        #theme-toggle:hover { transform: translateY(-3px); box-shadow: var(--box-shadow); }
-
-        /* ИСПРАВЛЕННЫЙ ЛЭЙАУТ ИГРОВОГО ЭКРАНА */
-        #game-screen {
-            justify-content: flex-start; /* Прижимает header к верху */
-            padding-top: 2rem;
-        }
-        .grid-wrapper {
-            flex-grow: 1; /* Занимает оставшееся место по высоте */
-            width: 100%;
+        
+        /* КОНТЕЙНЕР ДЛЯ НИЖНИХ КНОПОК */
+        .bottom-buttons-container {
             display: flex;
-            align-items: center; /* Центрирует сетку по вертикали */
-            justify-content: center; /* Центрирует сетку по горизонтали */
+            gap: 1rem;
+            margin-top: 2rem;
+            position: absolute;
+            bottom: 1rem; /* Отступ от нижнего края .screen */
         }
+        .bottom-button {
+            background-color: var(--card-color); border: 1px solid var(--grid-border-color);
+            color: var(--text-color); padding: 0.8rem 1.5rem; border-radius: 12px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        .bottom-button:hover { transform: translateY(-3px); box-shadow: var(--box-shadow); }
+        
+        #game-screen { justify-content: flex-start; padding-top: 2rem; }
+        .grid-wrapper { flex-grow: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
         .game-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 1rem; }
         .game-header-button { background-color: var(--card-color); border: 1px solid var(--grid-border-color); color: var(--text-color); padding: 0.6rem 1.2rem; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all var(--transition-speed); }
         .game-header-button:hover { transform: translateY(-3px); box-shadow: var(--box-shadow); border-color: var(--accent-color); }
         .game-header-button:disabled { opacity: 0.5; cursor: not-allowed; }
         .level-display { font-size: 1.5rem; font-weight: 700; color: var(--accent-color); }
-
         #grid-container { display: grid; gap: 6px; width: 90vw; max-width: 500px; user-select: none; }
         .grid-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; background-color: var(--card-color); border: 1px solid transparent; border-radius: 12px; font-size: clamp(1rem, 5vw, 2rem); font-weight: 700; text-transform: uppercase; color: var(--text-color); transition: all var(--transition-fast); cursor: pointer; }
         .grid-cell.selected { background-color: var(--selected-color); color: var(--text-selected-color); transform: scale(0.9); border-color: var(--accent-color); }
@@ -90,12 +92,21 @@
         .modal-content { background-color: var(--card-color); padding: 2rem; border-radius: 20px; text-align: center; box-shadow: var(--box-shadow); transform: scale(0.8); transition: transform var(--transition-speed) ease-out; width: 90%; max-width: 380px; }
         .modal-overlay.active .modal-content { transform: scale(1); }
         .modal-content h2 { font-size: 2.2rem; font-weight: 800; color: var(--accent-color); margin-top: 0; margin-bottom: 0.5rem; }
-        .modal-content p { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.8; }
+        .modal-content p { font-size: 1.1rem; margin-bottom: 1.5rem; opacity: 0.8; line-height: 1.5; text-align: left;}
         .modal-buttons { display: flex; flex-direction: column; gap: 0.8rem; }
         .modal-button { background-color: var(--accent-color); color: white; border: none; border-radius: 12px; padding: 1rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all var(--transition-speed); width: 100%; }
         .modal-button:hover { background-color: var(--accent-hover-color); transform: scale(1.05); }
         .modal-button.secondary { background-color: transparent; color: var(--accent-color); border: 2px solid var(--grid-border-color); }
         .modal-button.secondary:hover { background-color: var(--grid-border-color); }
+        
+        /* СТИЛИ ДЛЯ ИЛЛЮСТРАЦИИ В ПРАВИЛАХ */
+        .rules-illustration { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+        .illustration-grid { display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; }
+        .illustration-cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: var(--grid-border-color); border-radius: 8px; font-weight: 700; font-size: 1.5rem; }
+        .illustration-cell.highlighted { background-color: var(--accent-color); color: white; }
+
+        .toast-notification { position: fixed; bottom: 20%; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 12px 20px; border-radius: 25px; font-size: 1rem; font-weight: 600; z-index: 2000; opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; pointer-events: none; }
+        .toast-notification.show { opacity: 1; transform: translate(-50%, -20px); }
     </style>
 </head>
 <body>
@@ -108,7 +119,10 @@
                 <button class="menu-button" data-size="7"><div class="button-content">7 x 7<div class="level-info" id="level-info-7"></div></div><div class="lock-overlay"><span class="lock-icon">🔒</span><span class="unlock-progress" id="unlock-progress-7"></span></div></button>
                 <button class="menu-button" data-size="8"><div class="button-content">8 x 8<div class="level-info" id="level-info-8"></div></div><div class="lock-overlay"><span class="lock-icon">🔒</span><span class="unlock-progress" id="unlock-progress-8"></span></div></button>
             </div>
-            <button id="theme-toggle">Сменить тему</button>
+            <div class="bottom-buttons-container">
+                <button id="rules-button" class="bottom-button">Правила</button>
+                <button id="theme-toggle" class="bottom-button">Сменить тему</button>
+            </div>
         </div>
 
         <div id="game-screen" class="screen">
@@ -141,18 +155,33 @@
             </div>
         </div>
     </div>
+    <div id="rules-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Правила игры</h2>
+            <p>Найдите все слова, спрятанные в сетке. Слова могут изгибаться в любом направлении, но не пересекаются.</p>
+            <p>Чтобы выделить слово, проведите пальцем или мышью по буквам от начала до конца.</p>
+            <div class="rules-illustration">
+                <div class="illustration-grid">
+                    <div class="illustration-cell">А</div><div class="illustration-cell highlighted">К</div><div class="illustration-cell">Б</div>
+                    <div class="illustration-cell">В</div><div class="illustration-cell highlighted">О</div><div class="illustration-cell">Г</div>
+                    <div class="illustration-cell">Д</div><div class="illustration-cell highlighted">Т</div><div class="illustration-cell">Е</div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-rules-button" class="modal-button">Понятно</button>
+            </div>
+        </div>
+    </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
         // --- НАСТРОЙКИ ИГРЫ ---
         const LEVELS_TO_UNLOCK = 30;
         const INTERSTITIAL_AD_FREQUENCY = 2; // каждые 2 уровня
-        const HINT_COOLDOWN_SECONDS = 30;
         
         // --- VK ---
         let vkUserId = null;
         let levelsPlayedSinceAd = 0;
-        let hintCooldownInterval = null;
 
         // --- ИГРОВЫЕ ДАННЫЕ ---
         let gameState = {
@@ -299,43 +328,47 @@
         };
         const foundColors = [ { bg: '#f39c12' }, { bg: '#2ecc71' }, { bg: '#3498db' }, { bg: '#9b59b6' }, { bg: '#e74c3c' }, { bg: '#1abc9c' }, { bg: '#f1c40f' }, { bg: '#27ae60' }, { bg: '#2980b9' }, { bg: '#8e44ad' } ];
         const state = { gridSize: 0, words: [], wordCellCoords: new Map(), grid: [], foundWords: [], isSelecting: false, selectedCells: [], hintedWord: null, hintedLetterIndex: 0, };
-        const dom = { mainMenu: document.getElementById('main-menu'), gameScreen: document.getElementById('game-screen'), gridContainer: document.getElementById('grid-container'), levelDisplay: document.getElementById('level-display'), themeToggle: document.getElementById('theme-toggle'), winModal: document.getElementById('win-modal'), pauseModal: document.getElementById('pause-modal'), pauseButton: document.getElementById('pause-button'), hintButton: document.getElementById('hint-button'), nextLevelButton: document.getElementById('next-level-button'), resumeButton: document.getElementById('resume-button'), winMenuButton: document.getElementById('win-menu-button'), pauseMenuButton: document.getElementById('pause-menu-button'), };
+        const dom = {
+            mainMenu: document.getElementById('main-menu'),
+            gameScreen: document.getElementById('game-screen'),
+            gridContainer: document.getElementById('grid-container'),
+            levelDisplay: document.getElementById('level-display'),
+            themeToggle: document.getElementById('theme-toggle'),
+            winModal: document.getElementById('win-modal'),
+            pauseModal: document.getElementById('pause-modal'),
+            rulesModal: document.getElementById('rules-modal'),
+            pauseButton: document.getElementById('pause-button'),
+            hintButton: document.getElementById('hint-button'),
+            nextLevelButton: document.getElementById('next-level-button'),
+            resumeButton: document.getElementById('resume-button'),
+            winMenuButton: document.getElementById('win-menu-button'),
+            pauseMenuButton: document.getElementById('pause-menu-button'),
+            rulesButton: document.getElementById('rules-button'),
+            closeRulesButton: document.getElementById('close-rules-button'),
+        };
 
-        // --- ЛОГИКА ИНТЕГРАЦИИ VK ---
         async function initVk() {
-    try {
-        await vkBridge.send('VKWebAppInit', {});
-        
-        // --- ДОБАВЛЕНО: Предварительная загрузка рекламы ---
-        // Это говорит платформе VK начать кешировать рекламу заранее.
-        await vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' });
-
-        const user = await vkBridge.send('VKWebAppGetUserInfo');
-        vkUserId = user.id;
-        await loadGameData(); // Загружаем данные пользователя
-        await vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' });
-
-    } catch (error) {
-        console.warn('VK Init failed, running in guest mode.', error);
-        vkUserId = 'guest_' + Math.random().toString(36).substr(2, 9);
-        await loadGameData(); // Загружаем гостевые данные
-    } finally {
-        initGameUI(); // Инициализируем UI после загрузки данных
-    }
-}
+            try {
+                await vkBridge.send('VKWebAppInit', {});
+                await vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' });
+                const user = await vkBridge.send('VKWebAppGetUserInfo');
+                vkUserId = user.id;
+                await loadGameData();
+                await vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' });
+            } catch (error) {
+                console.warn('VK Init failed, running in guest mode.', error);
+                vkUserId = 'guest_' + Math.random().toString(36).substr(2, 9);
+                await loadGameData();
+            } finally {
+                initGameUI();
+            }
+        }
 
         async function saveGameData() {
             if (!vkUserId) return;
             const storageKey = `fillword_save_${vkUserId}`;
-            try {
-                await vkBridge.send('VKWebAppStorageSet', {
-                    key: storageKey,
-                    value: JSON.stringify(gameState)
-                });
-            } catch (error) {
-                // Резервное сохранение в localStorage
-                localStorage.setItem(storageKey, JSON.stringify(gameState));
-            }
+            try { await vkBridge.send('VKWebAppStorageSet', { key: storageKey, value: JSON.stringify(gameState) }); } 
+            catch (error) { localStorage.setItem(storageKey, JSON.stringify(gameState)); }
         }
 
         async function loadGameData() {
@@ -345,19 +378,10 @@
                 const response = await vkBridge.send('VKWebAppStorageGet', { keys: [storageKey] });
                 const data = response.keys[0]?.value ? JSON.parse(response.keys[0].value) : null;
                 if (data) {
-                    // Объединяем загруженные данные с дефолтными
                     gameState.theme = data.theme || 'light';
                     gameState.levels = { ...gameState.levels, ...data.levels };
-                } else {
-                    // Попытка загрузить из localStorage
-                    const localData = localStorage.getItem(storageKey);
-                    if(localData) gameState = JSON.parse(localData);
-                }
-            } catch (error) {
-                // Резервная загрузка из localStorage
-                 const localData = localStorage.getItem(storageKey);
-                 if(localData) gameState = JSON.parse(localData);
-            }
+                } else { const localData = localStorage.getItem(storageKey); if(localData) gameState = JSON.parse(localData); }
+            } catch (error) { const localData = localStorage.getItem(storageKey); if(localData) gameState = JSON.parse(localData); }
         }
 
         async function showInterstitialAd() {
@@ -365,15 +389,14 @@
             if (levelsPlayedSinceAd >= INTERSTITIAL_AD_FREQUENCY) {
                 try {
                     await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'interstitial' });
-                    levelsPlayedSinceAd = 0; // Сбрасываем счетчик
+                    levelsPlayedSinceAd = 0;
                 } catch (error) {
                     console.warn('Interstitial Ad error:', error);
-                    levelsPlayedSinceAd = 0; // Все равно сбрасываем, чтобы не спамить запросами
+                    levelsPlayedSinceAd = 0;
                 }
             }
         }
         
-        // --- ОБЩАЯ ЛОГИКА ИГРЫ ---
         function initGameUI() {
             document.body.dataset.theme = gameState.theme;
             updateMainMenu();
@@ -389,6 +412,8 @@
             dom.pauseMenuButton.addEventListener('click', showMainMenu);
             dom.hintButton.addEventListener('click', handleHintClick);
             dom.nextLevelButton.addEventListener('click', nextLevel);
+            dom.rulesButton.addEventListener('click', () => showModal(dom.rulesModal));
+            dom.closeRulesButton.addEventListener('click', () => hideModal(dom.rulesModal));
             dom.gridContainer.addEventListener('mousedown', handleMouseDown);
             dom.gridContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
             document.addEventListener('gesturestart', e => e.preventDefault());
@@ -455,14 +480,14 @@
             dom.levelDisplay.textContent = `Уровень ${gameState.levels[state.gridSize]}`;
             const requiredArea = state.gridSize * state.gridSize;
             state.words = findWordCombination(requiredArea);
-            if (!state.words) {  showMainMenu(); return; }
+            if (!state.words) { alert("Ошибка: не удалось подобрать слова для поля."); showMainMenu(); return; }
             let success = false; let attempts = 0;
             while(!success && attempts++ < 200) {
                 state.grid = createEmptyGrid();
                 state.wordCellCoords.clear();
                 success = placeWordsOnGrid();
             }
-            if(!success) {  showMainMenu(); return; }
+            if(!success) { alert("Ошибка: не удалось сгенерировать уровень."); showMainMenu(); return; }
             renderGrid();
         }
         
@@ -489,77 +514,56 @@
         const updateSelectionLook = () => { document.querySelectorAll('.grid-cell.selected').forEach(c => c.classList.remove('selected')); state.selectedCells.forEach(({r, c}) => { const cellEl = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`); if(cellEl) cellEl.classList.add('selected'); }); };
         function markWordAsFound(word) { const colorIndex = (state.foundWords.length - 1) % foundColors.length; const color = foundColors[colorIndex]; const coords = state.wordCellCoords.get(word); coords.forEach(({r, c}) => { const cellEl = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`); if (cellEl) { cellEl.classList.add('found'); cellEl.style.backgroundColor = color.bg; cellEl.style.color = '#ffffff'; } }); }
         
-        // --- ЛОГИКА ПОДСКАЗКИ С REWARDED AD ---
-async function handleHintClick() {
-    // Блокируем кнопку, чтобы избежать двойных нажатий
-    if (dom.hintButton.disabled) return;
-    dom.hintButton.disabled = true;
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000);
+        }
 
-    try {
-        // 1. Проверяем, доступна ли реклама
-        const adStatus = await vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' });
-
-        if (adStatus.result) {
-            // 2. Если доступна, показываем
-            const adResult = await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' });
-
-            if (adResult.result) {
-                // 3. Если пользователь посмотрел, даем подсказку
-                grantHint();
-            } else {
-                // Пользователь закрыл рекламу
-                showToast('Просмотрите рекламу до конца');
+        async function handleHintClick() {
+            if (dom.hintButton.disabled) return;
+            dom.hintButton.disabled = true;
+            try {
+                const adStatus = await vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' });
+                if (adStatus.result) {
+                    const adResult = await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' });
+                    if (adResult.result) { grantHint(); } 
+                    else { showToast('Просмотрите рекламу до конца'); }
+                } else { showToast('Подсказка пока недоступна'); }
+            } catch (error) {
+                console.error('Rewarded ad error:', error);
+                showToast('Ошибка при показе рекламы');
+            } finally {
+                dom.hintButton.disabled = false;
             }
-        } else {
-            // Реклама недоступна для показа в данный момент
-            showToast('Подсказка пока недоступна');
         }
-    } catch (error) {
-        console.error('Rewarded ad error:', error);
-        showToast('Ошибка при показе рекламы');
-    } finally {
-        // В любом случае разблокируем кнопку после попытки
-        dom.hintButton.disabled = false;
-    }
-}
-function grantHint() {
-    if (!state.hintedWord) {
-        const unfoundWords = state.words.filter(w => !state.foundWords.includes(w));
-        if (unfoundWords.length === 0) {
-            showToast('Все слова найдены!');
-            return;
+        function grantHint() {
+            if (!state.hintedWord) {
+                const unfoundWords = state.words.filter(w => !state.foundWords.includes(w));
+                if (unfoundWords.length === 0) { showToast('Все слова найдены!'); return; }
+                state.hintedWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+                state.hintedLetterIndex = 0;
+            }
+            if (state.hintedLetterIndex >= state.hintedWord.length) { showToast('Все буквы этого слова уже подсказаны'); return; }
+            state.hintedLetterIndex++;
+            const coords = state.wordCellCoords.get(state.hintedWord);
+            const cellsToAnimate = [];
+            for (let i = 0; i < state.hintedLetterIndex; i++) {
+                const cellEl = document.querySelector(`.grid-cell[data-r='${coords[i].r}'][data-c='${coords[i].c}']`);
+                if (cellEl) cellsToAnimate.push(cellEl);
+            }
+            document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
+            setTimeout(() => cellsToAnimate.forEach(cell => cell.classList.add('hint')), 10);
         }
-        state.hintedWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
-        state.hintedLetterIndex = 0;
-    }
+        const clearHint = () => { state.hintedWord = null; state.hintedLetterIndex = 0; document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint')); };
 
-    if (state.hintedLetterIndex >= state.hintedWord.length) {
-        showToast('Все буквы этого слова уже подсказаны');
-        return;
-    }
-    
-    state.hintedLetterIndex++;
-    const coords = state.wordCellCoords.get(state.hintedWord);
-    const cellsToAnimate = [];
-    
-    for (let i = 0; i < state.hintedLetterIndex; i++) {
-        const cellEl = document.querySelector(`.grid-cell[data-r='${coords[i].r}'][data-c='${coords[i].c}']`);
-        if (cellEl) cellsToAnimate.push(cellEl);
-    }
-    
-    document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint'));
-    setTimeout(() => cellsToAnimate.forEach(cell => cell.classList.add('hint')), 10);
-}
-
-const clearHint = () => { 
-    state.hintedWord = null; 
-    state.hintedLetterIndex = 0; 
-    document.querySelectorAll('.grid-cell.hint').forEach(cell => cell.classList.remove('hint')); 
-};
- 
         // --- ПЕРВЫЙ ЗАПУСК ---
         initVk();
     });
     </script>
 </body>
 </html>
+
